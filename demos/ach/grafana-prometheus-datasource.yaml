@@ -10,7 +10,7 @@ spec:
       secureJsonData: {}
       name: prometheus
       url: 'https://prometheus-k8s.openshift-monitoring.svc:9091'
-      basicAuthPassword: replace_me
+      basicAuthPassword: 'A2/gDP2bo2IdxTqd9Gsvee0auxCMWXGVWDsAJQSRgmbbSB2S7+q4d8u5a3Y+V2gfsbN8z5FwB38J4sEmONsdZpaYeJHetTm7wLsEmPtxpk1FDWEybk/BoJwD0YoMSugYRF8eRxWgZCEgUac13mGEMshHxZsSDHn7eq/BDcnXq4Is1G1xrWRhyplkHg4jVKG/qH63o36T3Seh+aXN7fzyi+/3odO/lyRQ5aVuJZ53pZFQ4dyMAzo7b/lg1P5PxLtTRmzA7gqdfUqLgvfpCgffqd+Z5wxUi+/a0n8N/ASLctF9K0McS0t0+nHgzje0336ePbb0YKGAl4GA709NmrcE'
       jsonData:
         timeInterval: 5s
         tlsSkipVerify: true

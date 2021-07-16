@@ -4,7 +4,7 @@ metadata:
   name: merchant-upload
   labels:
     strimzi.io/cluster: my-cluster
-  namespace: kafka
+  namespace: ach
 spec:
   partitions: 3
   replicas: 3
@@ -18,7 +18,7 @@ metadata:
   name: odfi
   labels:
     strimzi.io/cluster: my-cluster
-  namespace: kafka
+  namespace: ach
 spec:
   partitions: 3
   replicas: 3
@@ -32,7 +32,7 @@ metadata:
   name: rdfi
   labels:
     strimzi.io/cluster: my-cluster
-  namespace: kafka
+  namespace: ach
 spec:
   partitions: 3
   replicas: 3

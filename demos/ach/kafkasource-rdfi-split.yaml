@@ -1,15 +1,29 @@
-apiVersion: sources.knative.dev/v1alpha1
+apiVersion: sources.knative.dev/v1beta1
 kind: KafkaSource
 metadata:
   name: rdfi-split
   namespace: ach
+  labels:
+    app: rdfi-split
+    app.kubernetes.io/component: rdfi-split
+    app.kubernetes.io/instance: rdfi-split
+    app.kubernetes.io/part-of: ach-dashboard
 spec:
   bootstrapServers:
-    - 'my-cluster-kafka-bootstrap.kafka:9092'
+    - 'my-cluster-kafka-bootstrap.ach.svc:9092'
   consumerGroup: rdfi-split
+  net:
+    sasl:
+      password: {}
+      type: {}
+      user: {}
+    tls:
+      caCert: {}
+      cert: {}
+      key: {}
   sink:
     ref:
-      apiVersion: serving.knative.dev/v1alpha1
+      apiVersion: serving.knative.dev/v1
       kind: Service
       name: rdfi-split
   topics:

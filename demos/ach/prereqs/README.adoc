@@ -1,0 +1,49 @@
+= Pre-reqs for this demo
+
+Some additional notes on setting up the pre-reqs for this demo.
+
+* OpenShift 4.5 or more (last tested on 4.7), with cluster-admin access
+* OpenShift Container Storage 4.5 or more (last tested on 4.7.2)
+* AMQ Streams or Strimzi operator (last tested with AMQ Streams 1.6.0)
+* OpenDataHub operator (last tested with 0.9.0), optional (see below)
+* OpenShift Serverless operator (last tested 1.7.2)
+
+== OpenShift Container Storage 
+. Install OCS via operator hub. The operator will be installed in `openshift-storage` namespace.
+. After OCS is successfully installed, create a storage cluster (requires 3 OCP nodes). You can do so in the OCP console - navigate to 'Installed Operators' under 'openshift-storage' project.
+. Verify that the storage cluster and bucket class are created successfully
++
+[source, sh]
+----
+$ oc get storagecluster -n openshift-storage
+NAME                 AGE     PHASE   EXTERNAL   CREATED AT             VERSION
+ocs-storagecluster   5m19s   Ready              2021-07-06T02:51:44Z   4.7.0
+
+$ oc get bucketclass -n openshift-storage                              
+NAME                          PLACEMENT                                                        NAMESPACEPOLICY   PHASE   AGE
+noobaa-default-bucket-class   {"tiers":[{"backingStores":["noobaa-default-backing-store"]}]}                     Ready   54s
+----
+
+== AMQ Streams
+. Install AMQ Streams via operator hub.
+. Create project 'ach'
+. Create Kafka cluster in the 'ach' project.
+
+== OpenDataHub (optional)
+. Install Open Data Hub via operator hub.
+. Create a separate project, and deploy a 'KDef'. This will deploy the various components, including Grafana and Jupyter
+
+== OpenShift Serverless
+. Install OpenShift Serverless via operator hub.
+. Upon successful installation, 2 additional OCP projects will be created: 
+.. knative-serving
+.. knative-eventing
+. Create Knative Serving in the `knative-serving` project
+. Create Knative Eventing in the `knative-eventing` project
+. Create Knative Kafka in the `knative-eventing` project, remember to enable `kafkaSource`
++
+[source, sh]
+----
+oc apply -f prereqs/knative-kafka.yaml
+----
+. Ensure all CRDs are created successfully.

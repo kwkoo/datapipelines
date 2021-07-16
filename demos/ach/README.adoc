@@ -9,11 +9,13 @@ Those steps will guide you through all the steps needed to run this demo. They'r
 === Requirements and Operators
 You should have this pre-installed:
 
-* OpenShift 4.4 or more (last tested on 4.5), with cluster-admin access
-* OpenShift Container Storage 4.5 or more (last tested on 4.5)
-* AMQ Streams or Strimzi operator (last tested with AMQ Streams 1.6.0)
+* OpenShift 4.5 or more (last tested on 4.7), with cluster-admin access
+* OpenShift Container Storage 4.5 or more (last tested on 4.7)
+* AMQ Streams or Strimzi operator (last tested with AMQ Streams 1.7.2)
 * OpenDataHub operator (last tested with 0.9.0), optional (see below)
-* OpenShift Serverless operator (last tested 1.7.2)
+* OpenShift Serverless operator (last tested 1.15)
+
+NOTE: see prereqs/README.adoc for more information
 
 === ObjectStore and RGW
 If you are running OpenShift on AWS, OpenShift Container Storage won't have deployed an ObjectStore and the RadosGateway which are needed for bucket notifications. +
@@ -53,6 +55,8 @@ Make note of the credentials in the ouput of the command:
 Use the operator to deploy KNative Serving and Eventing. Do not forget to create the namespaces and instantiate Serving and Eventing in them. If you don't know what I mean, refer to the doc.
 
 ==== Eventing add-on
+NOTE: Skip this step if using AMQ Streams 1.15 (or later)
+
 KafkaSource CRD is not part of Eventing yet (as of Serverlerss 1.7.2), it's only a contrib. So you must install it manually.
 
 .Install Kafkasource
@@ -67,7 +71,7 @@ For this demo we will use the "ach" project. If you choose another name, please 
 .Create the project
 [bash]
 ----
-oc create project ach
+oc new-project ach
 ----
 
 From now on, all the commands must be run into this `ach` project.
@@ -94,7 +98,7 @@ Those are the secrets that will be used by the various pods we will create.
 
 First, edit the file `secrets.yaml` and replace the values for `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` that you got when creating the RGW user.
 
-If you have followed the previous instructions for creating the Object Store, the service should have been created with the right name, `http://rook-ceph-rgw-ocs-storagecluster-cephobjectstore.openshift-storage` so you should not need to change it.
+If you have followed the previous instructions for creating the Object Store, the service should have been created with the right name, `http://rook-ceph-rgw-s3a.openshift-storage` so you should not need to change it.
 
 You can leave the database parameters as they are, but you must use those when creating the database...
 
@@ -125,7 +129,7 @@ mysql -u root
 .Connect to the schema
 [bash]
 ----
-USE ach-db;
+USE achdb;
 ----
 
 .Database init (you can copy/paste all lines at once)
@@ -225,7 +229,7 @@ mysql -u root
 .Connect to the schema
 [bash]
 ----
-USE ach-db;
+USE achdb;
 ----
 
 .Database reset (you can copy/paste all lines at once)

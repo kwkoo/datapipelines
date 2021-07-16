@@ -1,16 +1,30 @@
-apiVersion: sources.knative.dev/v1alpha1
+apiVersion: sources.knative.dev/v1beta1
 kind: KafkaSource
 metadata:
   name: rdfi-process
   namespace: ach
+  labels:
+    app: rdfi-process
+    app.kubernetes.io/component: rdfi-process
+    app.kubernetes.io/instance: rdfi-process
+    app.kubernetes.io/part-of: ach-dashboard
 spec:
-  consumerGroup: rdfi-process
   bootstrapServers:
-    - my-cluster-kafka-bootstrap.kafka:9092
-  topics:
-    - rdfi
+    - 'my-cluster-kafka-bootstrap.ach.svc:9092'
+  consumerGroup: rdfi-process
+  net:
+    sasl:
+      password: {}
+      type: {}
+      user: {}
+    tls:
+      caCert: {}
+      cert: {}
+      key: {}
   sink:
     ref:
-      apiVersion: serving.knative.dev/v1alpha1
+      apiVersion: serving.knative.dev/v1
       kind: Service
       name: rdfi-process
+  topics:
+    - rdfi

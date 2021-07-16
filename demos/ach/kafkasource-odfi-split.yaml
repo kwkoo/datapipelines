@@ -1,16 +1,30 @@
-apiVersion: sources.knative.dev/v1alpha1
+apiVersion: sources.knative.dev/v1beta1
 kind: KafkaSource
 metadata:
   name: odfi-split
   namespace: ach
+  labels:
+    app: odfi-split
+    app.kubernetes.io/component: odfi-split
+    app.kubernetes.io/instance: odfi-split
+    app.kubernetes.io/part-of: ach-dashboard
 spec:
-  consumerGroup: odfi-split
   bootstrapServers:
-    - my-cluster-kafka-bootstrap.kafka:9092
-  topics:
-    - merchant-upload
+    - 'my-cluster-kafka-bootstrap.ach.svc:9092'
+  consumerGroup: odfi-split
+  net:
+    sasl:
+      password: {}
+      type: {}
+      user: {}
+    tls:
+      caCert: {}
+      cert: {}
+      key: {}
   sink:
     ref:
-      apiVersion: serving.knative.dev/v1alpha1
+      apiVersion: serving.knative.dev/v1
       kind: Service
       name: odfi-split
+  topics:
+    - merchant-upload

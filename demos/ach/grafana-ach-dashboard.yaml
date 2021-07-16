@@ -464,7 +464,7 @@ spec:
           ],
           "targets": [
             {
-              "expr": "kube_deployment_status_replicas{namespace=~\"$namespace\",deployment!~\"grafana.*|my-cluster.*\"}",
+              "expr": "kube_deployment_status_replicas{namespace=~\"$namespace\",deployment!~\"grafana.*|my-cluster.*|prometheus.*\"}",
               "format": "time_series",
               "instant": true,
               "interval": "",
@@ -859,7 +859,7 @@ spec:
           "pluginVersion": "7.1.1",
           "targets": [
             {
-              "expr": "sum(kube_pod_container_status_running{namespace=~\"$namespace\",pod!~'my-cluster.*|maria.*|grafana.*|kafdrop.*'})",
+              "expr": "sum(kube_running_pod_ready{namespace=~\"$namespace\",pod!~'my-cluster.*|maria.*|grafana.*|prometheus.*|achdbservice.*'})",
               "format": "time_series",
               "instant": true,
               "interval": "",
