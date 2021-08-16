@@ -1,0 +1,58 @@
+#!/bin/bash
+
+cd `dirname $0`
+BASE=`pwd`
+cd - >> /dev/null
+
+oc create cm -n ach bucket-script --from-file=${BASE}/bucket_notifications.py
+
+cat <<EOF | sed -e "s|#ACCESS_KEY_ID#|$(jq -r '.keys[0].access_key' /tmp/toolbox.json)|" -e "s|#SECRET_ACCESS_KEY#|$(jq -r '.keys[0].secret_key' /tmp/toolbox.json)|" | oc apply -f -
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: configure-buckets
+  namespace: ach
+spec:
+  completions: 1
+  selector: {}
+  template:
+    metadata:
+      name: configure-buckets
+    spec:
+      containers:
+        - name: configure-buckets
+          image: image-registry.openshift-image-registry.svc:5000/openshift/python:3.8-ubi8
+          volumeMounts:
+          - name: script
+            mountPath: "/app"
+          env:
+          - name: ACCESS_KEY_ID
+            value: #ACCESS_KEY_ID#
+          - name: SECRET_ACCESS_KEY
+            value: #SECRET_ACCESS_KEY#
+          command:
+          - /bin/bash
+          args:
+          - "-c"
+          - >
+              pip3 install boto3 botocore argparse
+
+              python3 /app/bucket_notifications.py
+      restartPolicy: Never
+      volumes:
+      - name: script
+        configMap:
+          name: bucket-script
+EOF
+
+echo -n "waiting for job to complete..."
+while [ $(oc get -n ach job/configure-buckets --no-headers 2>/dev/null | grep "1/1" | wc -l) -lt 1 ]; do
+  echo -n "."
+  sleep 10
+done
+echo "done"
+
+oc delete -n ach job/configure-buckets
+oc delete -n ach cm/bucket-script
+
+rm -f /tmp/toolbox.json

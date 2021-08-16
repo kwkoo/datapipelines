@@ -1,0 +1,22 @@
+#!/bin/bash
+
+oc delete -n ach job/create-transaction
+
+set -e
+
+cat <<EOF > /tmp/reset-db.sql
+DELETE FROM bank_balance;
+DELETE FROM merchant_upload;
+DELETE FROM odfi_split;
+DELETE FROM rdfi_split;
+DELETE FROM rdfi_process;
+INSERT INTO bank_balance(time,balance) SELECT CURRENT_TIMESTAMP(), 0;
+INSERT INTO merchant_upload(time,entry) SELECT CURRENT_TIMESTAMP(), 0;
+INSERT INTO odfi_split(time,entry) SELECT CURRENT_TIMESTAMP(), 0;
+INSERT INTO rdfi_split(time,entry) SELECT CURRENT_TIMESTAMP(), 0;
+INSERT INTO rdfi_process(time,entry) SELECT CURRENT_TIMESTAMP(), 0;
+EOF
+
+oc rsh dc/achdbservice mysql -u root achdb < /tmp/reset-db.sql
+
+rm -f /tmp/reset-db.sql

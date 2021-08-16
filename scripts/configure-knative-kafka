@@ -1,0 +1,29 @@
+#!/bin/bash
+
+echo -n "waiting for kafka bootstrap service to be available..."
+until oc get svc my-cluster-kafka-bootstrap -n ach &> /dev/null; do
+  echo -n "."
+  sleep 10
+done
+echo "done"
+
+echo -n "waiting for KnativeKafka api resource..."
+while [ $(oc api-resources | grep -i knativekafka | wc -l) -lt 1 ]; do
+  echo -n "."
+  sleep 10
+done
+echo "done"
+
+cat <<EOF | oc apply -f -
+apiVersion: operator.serverless.openshift.io/v1alpha1
+kind: KnativeKafka
+metadata:
+    name: knative-kafka
+    namespace: knative-eventing
+spec:
+    channel:
+        enabled: true
+        bootstrapServers: my-cluster-kafka-bootstrap.ach.svc:9092 
+    source:
+        enabled: true
+EOF

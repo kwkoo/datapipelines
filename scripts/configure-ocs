@@ -1,0 +1,37 @@
+#!/bin/bash
+
+cd `dirname $0`
+BASE=`pwd`
+cd - >> /dev/null
+
+set -e
+
+oc apply -f ${BASE}/../demos/ach/cephobjectstore.yaml
+
+echo -n "waiting for ocsinit to show up..."
+until oc get ocsinitialization/ocsinit -n openshift-storage &>/dev/null; do
+  echo -n "."
+  sleep 10
+done
+echo "done"
+
+oc patch OCSInitialization ocsinit -n openshift-storage --type json --patch  '[{ "op": "replace", "path": "/spec/enableCephTools", "value": true }]'
+
+echo -n "waiting for ceph toolbox to be ready..."
+while [ $(oc get po -n openshift-storage --no-headers | grep rook-ceph-tools | grep Running | wc -l) -lt 1 ]; do
+  echo -n "."
+  sleep 10
+done
+echo "done"
+
+oc exec -n openshift-storage `oc get pods -n openshift-storage | grep rook-ceph-tools | grep Running | awk '{print $1}'` -- radosgw-admin user create --uid="ach" --display-name="ach" > /tmp/toolbox.json
+
+ACCESS_KEY_ID="$(jq -r '.keys[0].access_key' /tmp/toolbox.json)"
+SECRET_ACCESS_KEY="$(jq -r '.keys[0].secret_key' /tmp/toolbox.json)"
+
+echo "ACCESS_KEY_ID=${ACCESS_KEY_ID}"
+echo "SECRET_ACCESS_KEY=${SECRET_ACCESS_KEY}"
+
+cat ${BASE}/../demos/ach/secrets.yaml | sed -e "s/AWS_ACCESS_KEY_ID: .*/AWS_ACCESS_KEY_ID: $(jq -r '.keys[0].access_key' /tmp/toolbox.json)/" -e "s/AWS_SECRET_ACCESS_KEY: .*/AWS_SECRET_ACCESS_KEY: $(jq -r '.keys[0].secret_key' /tmp/toolbox.json)/" | oc apply -f -
+
+rm -f /tmp/toolbox.json

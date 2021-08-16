@@ -1,0 +1,134 @@
+#!/bin/bash
+
+set -e
+
+# scale cluster up because OCS requires 3 nodes
+echo "scaling up machineset..."
+oc scale \
+  -n openshift-machine-api \
+  machineset/$(oc get -n openshift-machine-api machinesets -o jsonpath='{.items[?(@.spec.replicas==0)].metadata.name}') \
+  --replicas=1
+
+echo -n "waiting for node to come up..."
+while [ $(oc get nodes -l kubernetes.io/os=linux,node-role.kubernetes.io/worker= -o name | wc -l) -lt 3 ]; do
+  echo -n "."
+  sleep 30
+done
+echo "done"
+
+newnode="$(oc get nodes -l kubernetes.io/os=linux,node-role.kubernetes.io/worker= --no-headers | grep NotReady | awk '{ print $1 }')"
+if [ -n "$newnode" ]; then
+  echo "waiting for node to be ready..."
+  oc wait --for=condition=ready node/$newnode --timeout=300s
+fi
+
+echo "installing OCS operator..."
+cat <<EOF | oc apply -f -
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: openshift-storage
+spec:
+  finalizers:
+  - kubernetes
+status: {}
+---
+apiVersion: operators.coreos.com/v1
+kind: OperatorGroup
+metadata:
+  name: openshift-storage-operatorgroup
+  namespace: openshift-storage
+spec:
+  targetNamespaces:
+  - openshift-storage
+---
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  labels:
+    operators.coreos.com/ocs-operator.openshift-storage: ""
+  name: ocs-operator
+  namespace: openshift-storage
+spec:
+  channel: stable-4.7
+  installPlanApproval: Automatic
+  name: ocs-operator
+  source: redhat-operators
+  sourceNamespace: openshift-marketplace
+  startingCSV: ocs-operator.v4.7.3
+status: {}
+EOF
+
+echo -n "waiting for CSV to appear..."
+while [ $(oc get -n openshift-storage csv --no-headers 2>/dev/null | grep Succeeded | wc -l) -lt 1 ]; do
+  echo -n "."
+  sleep 10
+done
+echo "done"
+
+echo "labelling worker nodes..."
+for node in $(oc get nodes -l kubernetes.io/os=linux,node-role.kubernetes.io/worker -o name); do
+  oc label $node cluster.ocs.openshift.io/openshift-storage=''
+done
+
+echo "creating StorageCluster..."
+cat <<EOF |  oc apply -f -
+apiVersion: ocs.openshift.io/v1
+kind: StorageCluster
+metadata:
+  annotations:
+    uninstall.ocs.openshift.io/cleanup-policy: delete
+    uninstall.ocs.openshift.io/mode: graceful
+  name: ocs-storagecluster
+  namespace: openshift-storage
+  finalizers:
+    - storagecluster.ocs.openshift.io
+spec:
+  arbiter: {}
+  encryption:
+    kms: {}
+  externalStorage: {}
+  managedResources:
+    cephBlockPools: {}
+    cephConfig: {}
+    cephFilesystems: {}
+    cephObjectStoreUsers: {}
+    cephObjectStores: {}
+  nodeTopologies: {}
+  storageDeviceSets:
+    - config: {}
+      resources: {}
+      placement: {}
+      name: ocs-deviceset-gp2
+      dataPVCTemplate:
+        metadata: {}
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 512Gi
+          storageClassName: gp2
+          volumeMode: Block
+        status: {}
+      count: 1
+      replica: 3
+      portable: true
+      preparePlacement: {}
+  version: 4.7.0
+status: {}
+EOF
+
+echo -n "waiting for StorageCluster to be ready..."
+while [ $(oc get storagecluster -n openshift-storage --no-headers 2>/dev/null | grep " Ready" | wc -l) -lt 1 ]; do
+  echo -n "."
+  sleep 10
+done
+echo "done"
+
+echo -n "waiting for BucketClass to be ready..."
+while [ $(oc get bucketclass -n openshift-storage --no-headers 2>/dev/null | grep " Ready" | wc -l)  -lt 1 ]; do
+  echo -n "."
+  sleep 10
+done
+echo "done"

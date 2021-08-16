@@ -1,0 +1,37 @@
+#!/bin/bash
+
+oc new-app \
+  -n ach \
+  --template=mariadb-persistent \
+  -p DATABASE_SERVICE_NAME=achdbservice \
+  -p MYSQL_USER=achuser \
+  -p MYSQL_PASSWORD=achpassword \
+  -p MYSQL_ROOT_PASSWORD=achpassword \
+  -p MYSQL_DATABASE=achdb
+
+echo -n "waiting for database to be ready..."
+while [ $(oc get po -n ach | grep achdbservice | grep -v deploy | grep Running | wc -l) -lt 1 ]; do
+  echo -n "."
+  sleep 10
+done
+echo "done"
+
+set -e
+
+cat <<EOF > /tmp/init-db.sql
+CREATE TABLE bank_balance(time TIMESTAMP, balance DECIMAL(12,2));
+CREATE TABLE merchant_upload(time TIMESTAMP, entry INT(5));
+CREATE TABLE odfi_split(time TIMESTAMP, entry INT(5));
+CREATE TABLE rdfi_split(time TIMESTAMP, entry INT(5));
+CREATE TABLE rdfi_process(time TIMESTAMP, entry INT(5));
+
+INSERT INTO bank_balance(time,balance) SELECT CURRENT_TIMESTAMP(), 0;
+INSERT INTO merchant_upload(time,entry) SELECT CURRENT_TIMESTAMP(), 0;
+INSERT INTO odfi_split(time,entry) SELECT CURRENT_TIMESTAMP(), 0;
+INSERT INTO rdfi_split(time,entry) SELECT CURRENT_TIMESTAMP(), 0;
+INSERT INTO rdfi_process(time,entry) SELECT CURRENT_TIMESTAMP(), 0;
+EOF
+
+oc rsh -n ach dc/achdbservice mysql -u root achdb < /tmp/init-db.sql
+
+rm -f /tmp/init-db.sql

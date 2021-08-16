@@ -1,0 +1,16 @@
+#!/bin/bash
+
+cd `dirname $0`
+BASE=`pwd`
+cd - >> /dev/null
+
+echo -n "waiting for KafkaTopic api resource..."
+while [ $(oc api-resources | grep '^kafkasources' | wc -l) -lt 1 ]; do
+  echo -n "."
+  sleep 10
+done
+echo "done"
+
+set -e
+
+oc apply -f ${BASE}/../demos/ach/topics.yaml
