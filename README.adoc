@@ -6,4 +6,24 @@ link:./demos/ach[ACH data pipeline] : payments processing, the cloud native way!
 
 link:./demos/xrayedge[XRay automated processing] : pneumonia-risk assessment from x-ray images on a fully automated pipeline. 
 
-link:./demos/xray[XRay automated processing (first version)] : older version, maybe less refined processes. 
+link:./demos/xray[XRay automated processing (first version)] : older version, maybe less refined processes.
+
+== Installation Instructions
+
+1. Login to the OpenShift cluster as a cluster administrator using the `oc` CLI
+
+2. Execute the installation scripts by running `make`
+
+After everything has been installed, open the Grafana dashboard:
+
+* Open a web browser to Grafana by running `make grafana`
+* Login as `root` / `secret`
+* Select *Dashboards* / *Manage* / *ach* / *ACH Demo*
+
+Kick off a series of transactions by running `make create-transactions`
+
+You can examine the contents of the S3 buckets by running `make s3manager`
+
+You can also examine the Kafka topics by running `make kafdrop`
+
+After all the files have been processed, reset the demo by running `make reset`

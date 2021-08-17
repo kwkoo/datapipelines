@@ -1,0 +1,93 @@
+#!/bin/bash
+
+cat <<EOF | oc apply -f -
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: s3manager
+  name: s3manager
+  namespace: ach
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: s3manager
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: s3manager
+    spec:
+      containers:
+      - image: docker.io/mastertinner/s3manager
+        name: s3manager
+        env:
+        - name: ENDPOINT
+          value: "rook-ceph-rgw-s3a.openshift-storage"
+        - name: ACCESS_KEY_ID
+          valueFrom:
+            secretKeyRef:
+              name: s3-secret
+              key: AWS_ACCESS_KEY_ID
+        - name: SECRET_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: s3-secret
+              key: AWS_SECRET_ACCESS_KEY
+        - name: USE_SSL
+          value: "false"
+        ports:
+        - name: http
+          containerPort: 8080
+        resources: {}
+status: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  creationTimestamp: null
+  labels:
+    app: s3manager
+  name: s3manager
+  namespace: ach
+spec:
+  ports:
+  - port: 8080
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    app: s3manager
+  sessionAffinity: None
+  type: ClusterIP
+status: {}
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  annotations:
+    openshift.io/host.generated: "true"
+  creationTimestamp: null
+  labels:
+    app: s3manager
+  name: s3manager
+  namespace: ach
+spec:
+  port:
+    targetPort: 8080
+  to:
+    kind: Service
+    name: s3manager
+    weight: 100
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Allow
+  wildcardPolicy: None
+status: {}
+EOF
+
+oc wait -n ach --for=condition=available deploy/s3manager --timeout=120s
+sleep 10
+open "http://$(oc get -n ach route/s3manager -o jsonpath='{.spec.host}')"

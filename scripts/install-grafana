@@ -4,6 +4,18 @@ cd `dirname $0`
 BASE=`pwd`
 cd - >> /dev/null
 
+cat <<EOF | oc create -f -
+apiVersion: operators.coreos.com/v1
+kind: OperatorGroup
+metadata:
+  generateName: ach-
+  namespace: ach
+spec:
+  targetNamespaces:
+  - ach
+status: {}
+EOF
+
 cat <<EOF | oc apply -f -
 apiVersion: operators.coreos.com/v1alpha1
 kind: Subscription
@@ -77,4 +89,7 @@ cat ${BASE}/../demos/ach/grafana-prometheus-datasource.yaml | sed -e "s|basicAut
 oc apply -f ${BASE}/../demos/ach/grafana-mysql-datasource.yaml
 oc apply -f ${BASE}/../demos/ach/grafana-ach-dashboard.yaml
 
+oc wait -n ach --for=condition=available deploy/grafana-deployment --timeout=300s
+
 echo "Grafana URL: https://$(oc get -n ach route/grafana-route -o jsonpath='{.spec.host}')"
+open https://$(oc get -n ach route/grafana-route -o jsonpath='{.spec.host}')

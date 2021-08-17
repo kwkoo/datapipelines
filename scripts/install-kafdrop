@@ -51,6 +51,9 @@ spec:
     kind: Service
     name: kafdrop
     weight: 100
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Allow
   port:
     targetPort: 9000
   wildcardPolicy: None

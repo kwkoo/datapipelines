@@ -15,6 +15,7 @@ while [ $(oc get po -n ach | grep achdbservice | grep -v deploy | grep Running |
   sleep 10
 done
 echo "done"
+sleep 15
 
 set -e
 

@@ -1,6 +1,6 @@
 BASE:=$(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 
-.PHONY: deploy create-transaction reset grafana kafdrop
+.PHONY: deploy create-transaction reset grafana kafdrop s3manager
 
 deploy:
 	@$(BASE)/scripts/install-ocs
@@ -14,6 +14,8 @@ deploy:
 	@$(BASE)/scripts/configure-buckets
 	@$(BASE)/scripts/knative-services
 	@$(BASE)/scripts/install-grafana
+	@$(BASE)/scripts/install-s3manager
+	@rm -f /tmp/toolbox.json
 	@echo "installation complete"
 
 create-transaction:
@@ -27,3 +29,6 @@ grafana:
 
 kafdrop:
 	@open http://`oc get -n ach route/kafdrop -o jsonpath='{.spec.host}'`
+
+s3manager:
+	@open http://`oc get -n ach route/s3manager -o jsonpath='{.spec.host}'`
