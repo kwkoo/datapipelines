@@ -24,7 +24,7 @@ while [ $(oc get po -n openshift-storage --no-headers | grep rook-ceph-tools | g
 done
 echo "done"
 
-sleep 10
+sleep 30
 oc exec -n openshift-storage `oc get pods -n openshift-storage | grep rook-ceph-tools | grep Running | awk '{print $1}'` -- radosgw-admin user create --uid="ach" --display-name="ach" > /tmp/toolbox.json
 
 ACCESS_KEY_ID="$(jq -r '.keys[0].access_key' /tmp/toolbox.json)"

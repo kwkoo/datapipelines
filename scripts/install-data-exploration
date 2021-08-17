@@ -1,0 +1,45 @@
+#!/bin/bash
+
+cd `dirname $0`
+BASE=`pwd`
+cd - >> /dev/null
+
+set -e
+
+oc new-build \
+  --name explore \
+  -n ach \
+  --binary \
+  --docker-image=image-registry.openshift-image-registry.svc:5000/openshift/python:3.6-ubi8  \
+  -l app=explore
+
+echo -n "waiting for python imagestreamtag..."
+until oc get -n ach istag/python:3.6-ubi8 &> /dev/null; do
+  echo -n "."
+  sleep 5
+done
+
+oc start-build explore \
+  -n ach \
+  --from-dir=${BASE}/../demos/data-exploration/containers/explore \
+  --follow
+
+oc new-app \
+  -n ach \
+  --name explore \
+  -i explore \
+  -e APP_FILE=explore.py
+
+oc set env \
+  -n ach \
+  deploy/explore \
+  --from=secret/s3-secret
+
+oc get -n ach deploy/explore -o yaml | sed -e 's/8080/5000/g' -e 's/SERVICE_POINT/service_point/g' | oc apply -f -
+
+oc get -n ach svc/explore -o yaml | sed -e 's/8080/5000/g' | oc apply -f -
+
+oc expose -n ach svc/explore
+
+# to remove, run:
+# oc delete all -n ach -l app=explore

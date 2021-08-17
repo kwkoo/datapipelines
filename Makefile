@@ -3,18 +3,18 @@ BASE:=$(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 .PHONY: deploy create-transaction reset grafana kafdrop s3manager
 
 deploy:
-	@$(BASE)/scripts/install-ocs
-	@$(BASE)/scripts/install-amq-streams
-	@$(BASE)/scripts/install-serverless
-	@$(BASE)/scripts/configure-ocs
-	@$(BASE)/scripts/configure-knative-kafka
-	@$(BASE)/scripts/create-kafka-topics
-	@$(BASE)/scripts/install-kafdrop
-	@$(BASE)/scripts/install-db
-	@$(BASE)/scripts/configure-buckets
-	@$(BASE)/scripts/knative-services
-	@$(BASE)/scripts/install-grafana
-	@$(BASE)/scripts/install-s3manager
+	$(BASE)/scripts/install-ocs
+	$(BASE)/scripts/install-amq-streams
+	$(BASE)/scripts/install-serverless
+	$(BASE)/scripts/configure-ocs
+	$(BASE)/scripts/configure-knative-kafka
+	$(BASE)/scripts/create-kafka-topics
+	$(BASE)/scripts/install-kafdrop
+	$(BASE)/scripts/install-db
+	$(BASE)/scripts/configure-buckets
+	$(BASE)/scripts/knative-services
+	$(BASE)/scripts/install-grafana
+	$(BASE)/scripts/install-s3manager
 	@rm -f /tmp/toolbox.json
 	@echo "installation complete"
 

@@ -1,6 +1,8 @@
 #!/bin/bash
 
-oc new-app \
+echo 'installing MariaDB...'
+
+until oc new-app \
   -n ach \
   --template=mariadb-persistent \
   -p DATABASE_SERVICE_NAME=achdbservice \
@@ -8,6 +10,10 @@ oc new-app \
   -p MYSQL_PASSWORD=achpassword \
   -p MYSQL_ROOT_PASSWORD=achpassword \
   -p MYSQL_DATABASE=achdb
+do
+  echo "creation from template failed, retrying..."
+  sleep 5
+done
 
 echo -n "waiting for database to be ready..."
 while [ $(oc get po -n ach | grep achdbservice | grep -v deploy | grep Running | wc -l) -lt 1 ]; do

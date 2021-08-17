@@ -91,5 +91,12 @@ oc apply -f ${BASE}/../demos/ach/grafana-ach-dashboard.yaml
 
 oc wait -n ach --for=condition=available deploy/grafana-deployment --timeout=300s
 
+oc get secrets/grafana-admin-credentials -n ach -o json > /tmp/grafana.json
+ADMIN_USER="$(jq -r '.data.GF_SECURITY_ADMIN_USER' /tmp/grafana.json | base64 -d)"
+ADMIN_PASSWORD="$(jq -r '.data.GF_SECURITY_ADMIN_PASSWORD' /tmp/grafana.json | base64 -d)"
+
+echo "Grafana admin credentials: ${ADMIN_USER} / ${ADMIN_PASSWORD}"
+rm -f /tmp/grafana.json
+
 echo "Grafana URL: https://$(oc get -n ach route/grafana-route -o jsonpath='{.spec.host}')"
 open https://$(oc get -n ach route/grafana-route -o jsonpath='{.spec.host}')
