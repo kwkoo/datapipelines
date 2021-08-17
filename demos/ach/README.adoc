@@ -273,3 +273,34 @@ In the **tools** folder you will also find:
 * amq-streams-ocs4.yaml: definition od the KafkaCluster created with the AMQStreams operator, using OCS4 storage for persistency
 * grafana-prometheus-datasource.yaml: datasource for the Grafana Operator to connect to OpenShift Prometheus. You will have to replace the secret (basicAuth) by the one used by the built-in OpenShift Grafana.
 * kafdrop.yaml: installation of Kafdrop to monitor your Kafka/AMQStreams cluster
+
+
+== How the demo works
+
+1. The `create-transaction` Job invokes the transactions generator (`containers/Transactions generator/transaction_generator.py`)
+
+2. The transactions generator creates ACH files and uploads them to the `ach-merchant-upload` S3 bucket
+
+3. The file upload triggers a notification to the `merchant-upload` Kafka topic
+
+4. The message on the `merchant-upload` Kafka topic is consumed by the `odfi-split` KafkaSource
+
+5. This generates a CloudEvent that is picked up by the `odfi-split` Knative Service (`containers/ODFI splitter/odfi_split.py`)
+
+6. The ODFI splitter loads the ACH file from the `merchant-upload` S3 bucket (specified in the CloudEvent), parses the routing details, saves the file to the relevant `ach-odfi-*` S3 bucket, and deletes the source file from the S3 bucket
+
+7. The saving of the file in the S3 bucket triggers a notification to the `odfi` Kafka topic
+
+8. The message on the `odfi` Kafka topic is consumed by the `rdfi-split` KafkaSource
+
+9. This generates a CloudEvent that is picked up by the `rdfi-split` Knative Service (`containers/RDFI splitter/rdfi_split.py`)
+
+10. The RDFI Splitter loads the data from the bucket specified in the CloudEvent, processes the account info, creates an `.ach` file in the relevant `ach-rdfi-*` S3 bucket, and deletes the source file from the S3 bucket
+
+11. The file creation triggers a notification to the `rdfi` Kafka topic
+
+12. The message on the `rdfi` Kafka topic is consumed by the `rdfi-process` KafkaSource
+
+13. This generates a CloudEvent that is picked up by the `rdfi-process` Knative Service (`containers/RDFI processor/rdfi_process.py`)
+
+14. The RDFI processor loads the file from the bucket specified in the CloudEvent, calculates the transaction amount, updates the amount in the database, and deletes the file from the S3 bucket
