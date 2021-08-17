@@ -8,6 +8,17 @@ link:./demos/xrayedge[XRay automated processing] : pneumonia-risk assessment fro
 
 link:./demos/xray[XRay automated processing (first version)] : older version, maybe less refined processes.
 
+== Installation Pre-requisites
+
+Before you start the installation, you will need the following installed on your computer:
+
+    * `bash`
+    * `oc`
+    * `make`
+    * `sed`
+    * `awk`
+    * `jq`
+
 == Installation Instructions
 
 1. Login to the OpenShift cluster as a cluster administrator using the `oc` CLI
