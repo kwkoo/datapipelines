@@ -2,25 +2,28 @@
 
 set -e
 
-# scale cluster up because OCS requires 3 nodes
-echo "scaling up machineset..."
-oc scale \
-  -n openshift-machine-api \
-  machineset/$(oc get -n openshift-machine-api machinesets -o jsonpath='{.items[?(@.spec.replicas==0)].metadata.name}') \
-  --replicas=1
+if [ $(oc get nodes --no-headers -l node-role.kubernetes.io/worker='' | wc -l) -lt 3 ]; then
+  # scale cluster up because OCS requires 3 nodes
+  echo "scaling up machineset..."
+  oc scale \
+    -n openshift-machine-api \
+    machineset/$(oc get -n openshift-machine-api machinesets -o jsonpath='{.items[?(@.spec.replicas==0)].metadata.name}') \
+    --replicas=1
 
-echo -n "waiting for node to come up..."
-while [ $(oc get nodes -l kubernetes.io/os=linux,node-role.kubernetes.io/worker= -o name | wc -l) -lt 3 ]; do
-  echo -n "."
-  sleep 30
-done
-echo "done"
+  echo -n "waiting for node to come up..."
+  while [ $(oc get nodes -l kubernetes.io/os=linux,node-role.kubernetes.io/worker= -o name | wc -l) -lt 3 ]; do
+    echo -n "."
+    sleep 30
+  done
+  echo "done"
 
-newnode="$(oc get nodes -l kubernetes.io/os=linux,node-role.kubernetes.io/worker= --no-headers | grep NotReady | awk '{ print $1 }')"
-if [ -n "$newnode" ]; then
-  echo "waiting for node to be ready..."
-  oc wait --for=condition=ready node/$newnode --timeout=300s
+  newnode="$(oc get nodes -l kubernetes.io/os=linux,node-role.kubernetes.io/worker= --no-headers | grep NotReady | awk '{ print $1 }')"
+  if [ -n "$newnode" ]; then
+    echo "waiting for node to be ready..."
+    oc wait --for=condition=ready node/$newnode --timeout=300s
+  fi
 fi
+
 
 echo "installing OCS operator..."
 cat <<EOF | oc apply -f -
