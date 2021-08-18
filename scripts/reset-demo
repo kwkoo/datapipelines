@@ -17,6 +17,6 @@ INSERT INTO rdfi_split(time,entry) SELECT CURRENT_TIMESTAMP(), 0;
 INSERT INTO rdfi_process(time,entry) SELECT CURRENT_TIMESTAMP(), 0;
 EOF
 
-oc rsh dc/achdbservice mysql -u root achdb < /tmp/reset-db.sql
+oc rsh -n ach dc/achdbservice mysql -u root achdb < /tmp/reset-db.sql
 
 rm -f /tmp/reset-db.sql
