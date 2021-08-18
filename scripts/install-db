@@ -21,9 +21,14 @@ while [ $(oc get po -n ach | grep achdbservice | grep -v deploy | grep Running |
   sleep 10
 done
 echo "done"
-sleep 15
 
-set -e
+echo -n "checking for database pod readiness..."
+while [ $(oc get -n ach po --no-headers -l deploymentconfig=achdbservice 2>/dev/null | grep '1/1' | wc -l) -lt 1 ]; do
+  echo -n "."
+  sleep 10
+done
+
+sleep 10
 
 cat <<EOF > /tmp/init-db.sql
 CREATE TABLE bank_balance(time TIMESTAMP, balance DECIMAL(12,2));
@@ -39,6 +44,11 @@ INSERT INTO rdfi_split(time,entry) SELECT CURRENT_TIMESTAMP(), 0;
 INSERT INTO rdfi_process(time,entry) SELECT CURRENT_TIMESTAMP(), 0;
 EOF
 
-oc rsh -n ach dc/achdbservice mysql -u root achdb < /tmp/init-db.sql
+echo -n "creating schema in DB..."
+until oc rsh -n ach dc/achdbservice mysql -u root achdb < /tmp/init-db.sql; do
+  echo -n "."
+  sleep 10
+done
+echo "done"
 
 rm -f /tmp/init-db.sql
