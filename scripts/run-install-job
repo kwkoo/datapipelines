@@ -1,0 +1,70 @@
+#!/bin/bash
+
+PROJ=install
+
+cd `dirname $0`
+BASE=`pwd`
+cd - >> /dev/null
+
+oc new-project $PROJ || oc project $PROJ
+
+oc adm policy remove-cluster-role-from-user cluster-admin -z install -n $PROJ
+oc delete -n $PROJ sa install
+
+set -e
+
+oc create -n $PROJ sa install
+oc adm policy add-cluster-role-to-user cluster-admin -z install -n $PROJ
+
+cat <<EOF | oc apply -n $PROJ -f -
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: install-demo
+spec:
+  completions: 1
+  selector: {}
+  template:
+    metadata:
+      name: install-demo
+    spec:
+      serviceAccountName: install
+      containers:
+        - name: install-demo
+          image: ghcr.io/kwkoo/ocp-install:4.7
+          volumeMounts:
+          - name: install
+            mountPath: "/install"
+          command:
+          - /bin/bash
+          args:
+          - "-c"
+          - |
+            git clone https://github.com/kwkoo/datapipelines.git /install/git
+
+            cd /install/git
+
+            make deploy
+
+      restartPolicy: Never
+      volumes:
+      - name: install
+        emptyDir: {}
+EOF
+
+echo -n "waiting for job to start..."
+while [ $(oc get job/install-demo -n $PROJ -o jsonpath='{.status.active}' 2>/dev/null) != "1" ]; do
+  echo -n "."
+  sleep 5
+done
+echo "done"
+
+sleep 10
+
+oc logs -n $PROJ -f job/install-demo
+
+oc delete -n $PROJ job/install-demo
+oc adm policy remove-cluster-role-from-user cluster-admin -z install -n $PROJ
+oc delete -n $PROJ sa install
+oc delete project $PROJ
+oc project default

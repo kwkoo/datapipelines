@@ -27,6 +27,7 @@ while [ $(oc get -n ach po --no-headers -l deploymentconfig=achdbservice 2>/dev/
   echo -n "."
   sleep 10
 done
+echo "done"
 
 sleep 10
 

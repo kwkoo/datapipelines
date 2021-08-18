@@ -1,9 +1,12 @@
 IMAGE=ghcr.io/kwkoo/ocp-install
-IMAGETAG=0.1
+IMAGETAG=4.7
 
 BASE:=$(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 
-.PHONY: deploy create-transaction reset grafana kafdrop s3manager image
+.PHONY: clusterinstall deploy create-transaction reset grafana kafdrop s3manager image
+
+clusterinstall:
+	$(BASE)/scripts/run-install-job
 
 deploy:
 	$(BASE)/scripts/install-ocs
