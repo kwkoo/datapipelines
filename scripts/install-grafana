@@ -101,5 +101,5 @@ rm -f /tmp/grafana.json
 echo "Grafana URL: https://$(oc get -n ach route/grafana-route -o jsonpath='{.spec.host}')"
 
 if [ "$(uname -s)" = "Darwin" ]; then
-  open https://$(oc get -n ach route/grafana-route -o jsonpath='{.spec.host}')
+  open "https://$(oc get -n ach route/grafana-route -o jsonpath='{.spec.host}')"
 fi
