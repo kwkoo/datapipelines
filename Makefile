@@ -1,6 +1,9 @@
+IMAGE=ghcr.io/kwkoo/ocp-install
+IMAGETAG=0.1
+
 BASE:=$(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 
-.PHONY: deploy create-transaction reset grafana kafdrop s3manager
+.PHONY: deploy create-transaction reset grafana kafdrop s3manager image
 
 deploy:
 	$(BASE)/scripts/install-ocs
@@ -32,3 +35,9 @@ kafdrop:
 
 s3manager:
 	@open http://`oc get -n ach route/s3manager -o jsonpath='{.spec.host}'`
+
+image:
+	@docker build -t $(IMAGE):$(IMAGETAG) $(BASE)/install-image
+	@docker push $(IMAGE):$(IMAGETAG)
+	@docker tag $(IMAGE):$(IMAGETAG) $(IMAGE):latest
+	@docker push $(IMAGE):latest

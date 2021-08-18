@@ -89,5 +89,8 @@ status: {}
 EOF
 
 oc wait -n ach --for=condition=available deploy/s3manager --timeout=120s
-sleep 10
-open "http://$(oc get -n ach route/s3manager -o jsonpath='{.spec.host}')"
+
+if [ "$(uname -s)" = "Darwin" ]; then
+  sleep 10
+  open "http://$(oc get -n ach route/s3manager -o jsonpath='{.spec.host}')"
+fi

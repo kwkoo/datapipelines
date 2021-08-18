@@ -65,6 +65,7 @@ while [ $(oc get po -n ach -l deploymentconfig=kafdrop --no-headers 2>/dev/null 
   sleep 10
 done
 
-sleep 10
-
-open http://$(oc get -n ach route/kafdrop -o jsonpath='{.spec.host}')
+if [ "$(uname -s)" = "Darwin" ]; then
+  sleep 10
+  open "http://$(oc get -n ach route/kafdrop -o jsonpath='{.spec.host}')"
+fi
