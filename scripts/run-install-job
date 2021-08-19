@@ -1,6 +1,7 @@
 #!/bin/bash
 
-PROJ=install
+PROJ="install"
+JOB_NAME="install-demo"
 
 cd `dirname $0`
 BASE=`pwd`
@@ -8,8 +9,8 @@ cd - >> /dev/null
 
 oc new-project $PROJ || oc project $PROJ
 
-oc adm policy remove-cluster-role-from-user cluster-admin -z install -n $PROJ
-oc delete -n $PROJ sa install
+oc adm policy remove-cluster-role-from-user cluster-admin -z install -n $PROJ 2>/dev/null
+oc delete -n $PROJ sa install 2>/dev/null
 
 set -e
 
@@ -20,17 +21,17 @@ cat <<EOF | oc apply -n $PROJ -f -
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: install-demo
+  name: $JOB_NAME
 spec:
   completions: 1
   selector: {}
   template:
     metadata:
-      name: install-demo
+      name: $JOB_NAME
     spec:
       serviceAccountName: install
       containers:
-        - name: install-demo
+        - name: $JOB_NAME
           image: ghcr.io/kwkoo/ocp-install:4.7
           volumeMounts:
           - name: install
@@ -52,18 +53,20 @@ spec:
         emptyDir: {}
 EOF
 
-echo -n "waiting for job to start..."
-while [ $(oc get job/install-demo -n $PROJ -o jsonpath='{.status.active}' 2>/dev/null) != "1" ]; do
+echo -n "waiting for pod to appear..."
+until POD="$(oc get -n $PROJ po -l job-name=$JOB_NAME -o name 2>/dev/null)"; do
   echo -n "."
   sleep 5
 done
 echo "done"
 
-sleep 10
+until oc logs -n $PROJ -f $POD; do
+  sleep 5
+done
 
-oc logs -n $PROJ -f job/install-demo
+set +e
 
-oc delete -n $PROJ job/install-demo
+oc delete -n $PROJ job/$JOB_NAME
 oc adm policy remove-cluster-role-from-user cluster-admin -z install -n $PROJ
 oc delete -n $PROJ sa install
 oc delete project $PROJ
