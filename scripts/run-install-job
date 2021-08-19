@@ -64,6 +64,8 @@ until oc logs -n $PROJ -f $POD; do
   sleep 5
 done
 
+echo "installation completed, cleaning up..."
+
 set +e
 
 oc delete -n $PROJ job/$JOB_NAME
