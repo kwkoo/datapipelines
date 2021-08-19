@@ -90,6 +90,9 @@ EOF
 
 oc wait -n ach --for=condition=available deploy/s3manager --timeout=120s
 
+# Topology view application
+oc label -n ach deploy/s3manager app.kubernetes.io/part-of=demo
+
 if [ "$(uname -s)" = "Darwin" ]; then
   sleep 10
   open "http://$(oc get -n ach route/s3manager -o jsonpath='{.spec.host}')"

@@ -53,3 +53,6 @@ done
 echo "done"
 
 rm -f /tmp/init-db.sql
+
+# Topology view application
+oc label -n ach dc/achdbservice app.kubernetes.io/part-of=demo

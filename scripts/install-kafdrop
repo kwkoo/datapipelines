@@ -65,6 +65,9 @@ while [ $(oc get po -n ach -l deploymentconfig=kafdrop --no-headers 2>/dev/null 
   sleep 10
 done
 
+# Topology view application
+oc label -n ach dc/kafdrop app.kubernetes.io/part-of=demo
+
 if [ "$(uname -s)" = "Darwin" ]; then
   sleep 10
   open "http://$(oc get -n ach route/kafdrop -o jsonpath='{.spec.host}')"
