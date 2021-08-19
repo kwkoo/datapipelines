@@ -1,5 +1,8 @@
 #!/bin/bash
 
+PROJ="ach"
+JOB_NAME="configure-buckets"
+
 cd `dirname $0`
 BASE=`pwd`
 cd - >> /dev/null
@@ -10,17 +13,17 @@ cat <<EOF | oc apply -f -
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: configure-buckets
-  namespace: ach
+  name: $JOB_NAME
+  namespace: $PROJ
 spec:
   completions: 1
   selector: {}
   template:
     metadata:
-      name: configure-buckets
+      name: $JOB_NAME
     spec:
       containers:
-        - name: configure-buckets
+        - name: $JOB_NAME
           image: image-registry.openshift-image-registry.svc:5000/openshift/python:3.8-ubi8
           volumeMounts:
           - name: script
@@ -51,12 +54,23 @@ spec:
           name: bucket-script
 EOF
 
+echo -n "waiting for pod to appear..."
+until POD="$(oc get -n $PROJ po -l job-name=$JOB_NAME -o name 2>/dev/null)"; do
+  echo -n "."
+  sleep 5
+done
+echo "done"
+
+until oc logs -n $PROJ -f $POD; do
+  sleep 5
+done
+
 echo -n "waiting for job to complete..."
-while [ $(oc get -n ach job/configure-buckets --no-headers 2>/dev/null | grep "1/1" | wc -l) -lt 1 ]; do
+while [ $(oc get -n $PROJ job/$JOB_NAME --no-headers 2>/dev/null | grep "1/1" | wc -l) -lt 1 ]; do
   echo -n "."
   sleep 10
 done
 echo "done"
 
-oc delete -n ach job/configure-buckets
-oc delete -n ach cm/bucket-script
+oc delete -n $PROJ job/$JOB_NAME
+oc delete -n $PROJ cm/bucket-script
