@@ -1,0 +1,15 @@
+apiVersion: camel.apache.org/v1alpha1
+kind: KameletBinding
+metadata:
+  name: merchant-uploads
+spec:
+  source:
+    ref:
+      kind: Kamelet
+      apiVersion: camel.apache.org/v1alpha1
+      name: kafka-not-secured-source
+    properties:
+      brokers: "my-cluster-kafka-bootstrap.ach.svc:9092"
+      topic: "merchant-upload"
+  sink:
+    uri: "log:info"

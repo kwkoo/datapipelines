@@ -1,0 +1,40 @@
+#!/bin/bash
+
+cd $(dirname $0)
+BASE=$(pwd)
+cd - >> /dev/null
+
+PROJ=ach
+
+kubectl get ns $PROJ &> /dev/null
+if [ $? -ne 0 ]; then
+  kubectl create ns $PROJ
+fi
+
+kamel install --cluster-setup -n $PROJ
+
+kamel install \
+  --namespace $PROJ \
+  --wait
+
+echo -n "waiting for KameletBindings api resource to show up..."
+while [ $(kubectl api-resources | grep '^kameletbindings' | wc -l) -lt 1 ]; do
+  echo -n "."
+  sleep 10
+done
+echo "done"
+
+kubectl apply -n $PROJ -f ${BASE}/../kamelet-binding.yaml
+
+echo -n "waiting for pod to show up..."
+while [ $(kubectl get po -n $PROJ -l camel.apache.org/integration=merchant-uploads --no-headers 2>/dev/null | wc -l) -lt 1 ]; do
+  echo -n "."
+  sleep 10
+done
+echo "done"
+
+set -e
+
+kubectl wait -n $PROJ --for=condition=available --timeout=180s deploy/merchant-uploads
+
+kamel delete -n $PROJ merchant-uploads
