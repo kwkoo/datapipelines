@@ -1,0 +1,13 @@
+#!/bin/bash
+
+PROJ=ach
+
+COUNT="$1"
+COUNT=$(( COUNT + 0 ))
+
+if [ $COUNT -lt 1 ]; then
+  COUNT=1
+fi
+
+HOST="http://$(oc get route/generator -n $PROJ -o jsonpath='{.spec.host}')"
+curl "${HOST}?count=${COUNT}"

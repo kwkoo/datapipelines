@@ -21,6 +21,7 @@ deploy:
 	$(BASE)/scripts/knative-services
 	$(BASE)/scripts/install-grafana
 	$(BASE)/scripts/install-s3manager
+	$(BASE)/scripts/deploy-generator
 	@rm -f /tmp/toolbox.json
 	@echo "installation complete"
 

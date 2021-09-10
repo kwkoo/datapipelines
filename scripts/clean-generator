@@ -1,0 +1,5 @@
+#!/bin/bash
+
+PROJ=ach
+
+oc delete -n $PROJ all -l app=generator
