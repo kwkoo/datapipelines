@@ -3,10 +3,11 @@ IMAGETAG=4.7
 
 BASE:=$(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 
-.PHONY: clusterinstall deploy create-transaction reset grafana kafdrop s3manager image
+.PHONY: clusterinstall deploy create-transaction reset grafana kafdrop s3manager console image
 
 clusterinstall:
 	$(BASE)/scripts/run-install-job
+	$(BASE)/scripts/install-camel-k
 
 deploy:
 	$(BASE)/scripts/install-ocs
@@ -39,6 +40,9 @@ kafdrop:
 
 s3manager:
 	@open http://`oc get -n ach route/s3manager -o jsonpath='{.spec.host}'`
+
+console:
+	@open https://`oc get -n openshift-console route/console -o jsonpath='{.spec.host}'`
 
 image:
 	@docker build -t $(IMAGE):$(IMAGETAG) $(BASE)/install-image
