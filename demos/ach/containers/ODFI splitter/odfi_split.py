@@ -63,16 +63,6 @@ class CloudeventsServer(object):
                 data = data.decode('utf-8')
                 logging.info(data)
 
-                #if content_type != 'application/json':
-                #    logging.info('Not JSON')
-                #    data = io.StringIO(data)
-
-                #try:
-                #    event = v02.Event()
-                #    event = m.FromRequest(event, headers, data, json.loads)
-                #except Exception as e:
-                #    logging.error(f"Event error: {e}")
-                #    raise
                 event = eval(data)['Records'][0]
                 logging.info(event)
                 func(event)
